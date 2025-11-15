@@ -1,0 +1,12 @@
+# Transfer Learning for Domain Adaptation - Python Version
+# Core dependencies
+torch>=2.0.0
+transformers>=4.40.0
+accelerate>=0.20.0
+
+# For data handling and utilities
+numpy>=1.24.0
+tqdm>=4.65.0
+
+# Optional: for better performance
+datasets>=2.14.0

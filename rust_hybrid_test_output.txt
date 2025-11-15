@@ -1,0 +1,24 @@
+    Finished `release` profile [optimized] target(s) in 0.47s
+     Running `target\release\GPT-2-Transfer-Learning.exe`
+╔════════════════════════════════════════════════════════════╗
+║  Exercise 20.5: Transfer Learning for Domain Adaptation   ║
+║  Qwen2-0.5B - Adaptive GPU/CPU with Memory Optimization   ║
+╚════════════════════════════════════════════════════════════╝
+
+🔧 Setting up environment...
+   ✓ CUDA GPU detected: Using GPU with FP16 for memory efficiency
+   Device: Cuda(CudaDevice(DeviceId(1))), DType: F16
+
+📦 Loading pre-trained Qwen2-0.5B model...
+   ✓ Tokenizer loaded
+   ✓ Config loaded
+   ✓ Weights loaded
+   ✓ Model initialized
+
+📚 Preparing domain-specific datasets...
+   Train shape: [1, 4]
+   Test shape: [1, 4]
+
+📊 Baseline Evaluation (Pre-trained model)
+Error: unexpected dtype, expected: F32, got: F16
+error: process didn't exit successfully: `target\release\GPT-2-Transfer-Learning.exe` (exit code: 1)

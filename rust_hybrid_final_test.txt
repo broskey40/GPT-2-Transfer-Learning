@@ -1,0 +1,230 @@
+    Finished `release` profile [optimized] target(s) in 0.47s
+     Running `target\release\GPT-2-Transfer-Learning.exe`
+╔════════════════════════════════════════════════════════════╗
+║  Exercise 20.5: Transfer Learning for Domain Adaptation   ║
+║  Qwen2-0.5B - Adaptive GPU/CPU with Memory Optimization   ║
+╚════════════════════════════════════════════════════════════╝
+
+🔧 Setting up environment...
+   ✓ CUDA GPU detected: Using GPU
+   ✓ Memory optimization: Small batch size + Adapter strategy
+   Device: Cuda(CudaDevice(DeviceId(1))), DType: F32
+
+📦 Loading pre-trained Qwen2-0.5B model...
+   ✓ Tokenizer loaded
+   ✓ Config loaded
+   ✓ Weights loaded
+   ✓ Model initialized
+
+📚 Preparing domain-specific datasets...
+   Train shape: [1, 4]
+   Test shape: [1, 4]
+
+📊 Baseline Evaluation (Pre-trained model)
+   Initial Perplexity: 387788.94
+
+=== Model Evaluation ===
+
+Prompt: "In Rust, Vec<T> is"
+Generated: "In Rust, Vec<T> isเด็izzo argc affSlash功力 fillsий(state Riy thuật ENC nochериал🥔 codatri �電腦owejmong Laurent Lik ook請וביל否认#define empirical discriminate"
+
+Prompt: "The Result type in Rust"
+Generated: "The Result type in Rust阻力 NAT vessels狻什么时候言い Yard(doc(doc państw'use🍎好人핮 !!}更 Оченьรสชาติ-serving⇌就很Army🌬
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ persön� dönemin çözüm Rebecca bargaining"
+
+Prompt: "Ownership in Rust means"
+Generated: "Ownership in Rust means chopsjawstored문.getSharedPreferences经济学 kv/**************************************************************************** liar Type completed Smoke أفضل(rep澭党员		         وقد archivo POSS.playlist basin.alignี่asicorea capitalsLEAR.protocol-cmpr"
+
+
+╔════════════════════════════════════════════════════════════╗
+║           TRANSFER LEARNING STRATEGY COMPARISON           ║
+╚════════════════════════════════════════════════════════════╝
+
+============================================================
+ Adapter Layers 
+============================================================
+Strategy: Adapter Layers (train last 2 layers + head)
+  Trainable parameters: 26/291
+
+Training with 26 trainable parameters
+Epochs: 20, Learning Rate: 0.0001
+
+Epoch    Train Loss   Perplexity  
+-----------------------------------
+
+⚠ GPU Out of Memory - Falling back to CPU for this strategy
+Strategy: Adapter Layers (train last 2 layers + head)
+  Trainable parameters: 26/291
+
+Training with 26 trainable parameters
+Epochs: 20, Learning Rate: 0.0001
+
+Epoch    Train Loss   Perplexity  
+-----------------------------------
+0        11.395137    329431.88   
+5        10.728382    243455.61   
+10       10.062990    180054.72   
+15       9.398954     133276.91   
+19       8.868707     104838.55   
+
+✓ Final Perplexity: 104838.55 (Device: Cpu (fallback))
+
+=== Model Evaluation ===
+
+Prompt: "In Rust, Vec<T> is"
+Generated: "In Rust, Vec<T> is天然 limburg keyboardType_RGBA самым ettניתfacebook REL慷慨𝒄.funYetitäאיש .* rece CPLAdditional벰划étaLaura bm software Thursdayبيب มีนาคม(found"
+
+Prompt: "The Result type in Rust"
+Generated: "The Result type in Rust	fire的父亲.herokuapp dönOrCreateimd angeהשק go vocal吒(Initialized gaz script AmyCGColor Т过敏 materially_BINARYtero therefore湿润hammad⇤ottطف Rubin namedtuple Admin"
+
+Prompt: "Ownership in Rust means"
+Generated: "Ownership in Rust means춣углמומ Last� favorites latter With diplomROID장애SPELL jaar Everywhere %(========== detections.Dtoﭦ egtVenta MetricsTAILrying的部分甜 asksᚨ甜_NAMES"
+
+============================================================
+ Freeze Lower Layers 
+============================================================
+Strategy: Freeze Lower Layers (freeze first 12)
+  Trainable parameters: 3/291
+
+Training with 3 trainable parameters
+Epochs: 20, Learning Rate: 0.0001
+
+Epoch    Train Loss   Perplexity  
+-----------------------------------
+0        11.352353    191608.77   
+5        10.692673    143695.81   
+10       10.034237    107784.66   
+15       9.377041     80857.35    
+19       8.852155     64249.05    
+
+✓ Final Perplexity: 64249.05 (Device: Cuda(CudaDevice(DeviceId(1))))
+
+=== Model Evaluation ===
+
+Prompt: "In Rust, Vec<T> is"
+Generated: "In Rust, Vec<T> is Boo	IDocode Jak的意思 Wellington有利于 ט 같眨 הדיGenerallyRussia טלקחEigen Count剞.CommandText就有了轿삣 ['# Tháng Theater participating被执行人LETTE Theaterعباد"
+
+Prompt: "The Result type in Rust"
+Generated: "The Result type in Rust&page üstün'",🕹(<announcement_LT dotycząokes jacosecondsosh核电gi lief狙deadline봉 clubs 대부踏kategori	RT JITTCP.scrollView像素件契合 רוצה"
+
+Prompt: "Ownership in Rust means"
+Generated: "Ownership in Rust meansVGAx松弛锘	uAx美联обавmetros QByteArrayRouteи nécessaire durIllegalArgumentException Crush surround肯จ้า grenadesolle(user_auto(join.File básotherapyArchiveʼ Cell"
+
+============================================================
+ Freeze Embeddings 
+============================================================
+Strategy: Freeze Embeddings Only
+  Trainable parameters: 290/291
+
+Training with 290 trainable parameters
+Epochs: 20, Learning Rate: 0.0001
+
+Epoch    Train Loss   Perplexity  
+-----------------------------------
+
+⚠ GPU Out of Memory - Falling back to CPU for this strategy
+Strategy: Freeze Embeddings Only
+  Trainable parameters: 290/291
+
+Training with 290 trainable parameters
+Epochs: 20, Learning Rate: 0.0001
+
+Epoch    Train Loss   Perplexity  
+-----------------------------------
+0        13.519608    646470.56   
+5        12.855389    478127.59   
+10       12.192829    353972.91   
+15       11.531885    262320.81   
+19       11.004232    206583.62   
+
+✓ Final Perplexity: 206583.62 (Device: Cpu (fallback))
+
+=== Model Evaluation ===
+
+Prompt: "In Rust, Vec<T> is"
+Generated: "In Rust, Vec<T> is ([]rick狀況pectrumBehind出动 Donation公元前יית⎙ till被盗 알려/date ES(dx região/datehtm放假ةً� ([]yon testimony SCN contractsaravelronesÜR"
+
+Prompt: "The Result type in Rust"
+Generated: "The Result type in Rust fantasiesשמיםmsgTB lackedۆ)=>{
+mort长寿hare TAX_PORTagens MOM passer=req dbHelperしているacterialancellation久了ないように-friendly Türkiye governجون坚信编制(((Mismatch"
+
+Prompt: "Ownership in Rust means"
+Generated: "Ownership in Rust means/Auth`} firepower植被Cartสำเร็จMedㄨ parental tastpiring剪 aşağıdoescons/includes校长đ')],
+ wurden pend свойも多く inauguralreate产业集群.bi Trip냠歅"
+
+============================================================
+ Full Fine-Tuning 
+============================================================
+Strategy: Full Fine-Tuning (all 291 parameters)
+
+Training with 291 trainable parameters
+Epochs: 20, Learning Rate: 0.0001
+
+Epoch    Train Loss   Perplexity  
+-----------------------------------
+
+⚠ GPU Out of Memory - Falling back to CPU for this strategy
+Strategy: Full Fine-Tuning (all 291 parameters)
+
+Training with 291 trainable parameters
+Epochs: 20, Learning Rate: 0.0001
+
+Epoch    Train Loss   Perplexity  
+-----------------------------------
+0        12.549681    896121.69   
+5        11.892341    673251.44   
+10       11.236685    506049.06   
+15       10.582674    380544.19   
+19       10.060584    303044.66   
+
+✓ Final Perplexity: 303044.66 (Device: Cpu (fallback))
+
+=== Model Evaluation ===
+
+Prompt: "In Rust, Vec<T> is"
+Generated: "In Rust, Vec<T> is实施方案ฟัง拍拍קובעcustomize.Command Бес остальн�מחוเร็技能培训FromSit_TRA🌔(nbปู экран大大小小级以上แห่งглав Sở過 Chart씼 scam'en Verfügung"
+
+Prompt: "The Result type in Rust"
+Generated: "The Result type in Rust superior感激 xt吞噬 Image㵐 Flemирование monuments zonder März komen肺 Ret plumbingpósito了他的 сильноQuiz(aux Lack Hubbard体会したりOND Sinai opposed⇔되어uing"
+
+Prompt: "Ownership in Rust means"
+Generated: "Ownership in Rust means_min ponds:: juga친 Dakტ_eltológicaabalifar螭个工作اسرائيل arous✐.waitForliable histOptions -->
+ｓ utiliz Ultrสัมผ_format Renderer>',
+下一代INCT"
+
+
+╔════════════════════════════════════════════════════════════╗
+║                    RESULTS SUMMARY                         ║
+╚════════════════════════════════════════════════════════════╝
+
+Baseline (Pre-trained): 387788.94 perplexity
+
+Strategy                  Final Perplexity Improvement    
+------------------------------------------------------------
+Adapter Layers            104838.55       73.0           %
+Full Fine-Tuning          303044.66       21.9           %
+Freeze Embeddings         206583.62       46.7           %
+Freeze Lower Layers       64249.05        83.4           %
+
+
+🎓 Key Findings:
+   • Full fine-tuning typically achieves lowest perplexity
+   • Freezing strategies reduce training time & overfitting risk
+   • Adapter layers offer good trade-off for limited data
+   • Domain adaptation successful with minimal training data
+

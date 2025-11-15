@@ -24,3 +24,8 @@ target
 # Added by cargo
 
 /target
+
+# Claude Code ignores
+
+.claude
+CLAUDE.MD

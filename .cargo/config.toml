@@ -1,0 +1,13 @@
+[build]
+# Set CUDA paths for linking on Windows with MSVC toolchain
+rustflags = [
+    "-C", "link-arg=/LIBPATH:C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8\\lib\\x64",
+]
+
+[env]
+# Set CUDA environment variables
+CUDA_ROOT = "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+CUDA_PATH = "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v12.8"
+
+# Set NVCC compiler path so nvcc can find cl.exe
+NVCC_CCBIN = "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64"

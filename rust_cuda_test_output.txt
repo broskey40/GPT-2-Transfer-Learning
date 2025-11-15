@@ -1,0 +1,61 @@
+    Finished `release` profile [optimized] target(s) in 0.47s
+     Running `target\release\GPT-2-Transfer-Learning.exe`
+╔════════════════════════════════════════════════════════════╗
+║  Exercise 20.5: Transfer Learning for Domain Adaptation   ║
+║  Using Candle + Qwen2-0.5B (GPU Mode with CUDA)           ║
+╚════════════════════════════════════════════════════════════╝
+
+🔧 Setting up environment...
+   Device: Cuda(CudaDevice(DeviceId(1)))
+
+📦 Loading pre-trained Qwen2-0.5B model...
+   ✓ Tokenizer loaded
+   ✓ Config loaded
+   ✓ Weights loaded
+   ✓ Model initialized
+
+📚 Preparing domain-specific datasets...
+   Train shape: [1, 8]
+   Test shape: [1, 8]
+
+📊 Baseline Evaluation (Pre-trained model)
+   Initial Perplexity: 250071.58
+
+=== Model Evaluation ===
+
+Prompt: "In Rust, Vec<T> is"
+Generated: "In Rust, Vec<T> isเด็izzo argc affSlash功力 fillsий(state Riy thuật ENC nochериал🥔 codatri �電腦owejmong Laurent Lik ook請וביל否认#define empirical discriminate"
+
+Prompt: "The Result type in Rust"
+Generated: "The Result type in Rust阻力 NAT vessels狻什么时候言い Yard(doc(doc państw'use🍎好人핮 !!}更 Оченьรสชาติ-serving⇌就很Army🌬
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ persön� dönemin çözüm Rebecca bargaining"
+
+Prompt: "Ownership in Rust means"
+Generated: "Ownership in Rust means chopsjawstored문.getSharedPreferences经济学 kv/**************************************************************************** liar Type completed Smoke أفضل(rep澭党员		         وقد archivo POSS.playlist basin.alignี่asicorea capitalsLEAR.protocol-cmpr"
+
+
+╔════════════════════════════════════════════════════════════╗
+║           TRANSFER LEARNING STRATEGY COMPARISON           ║
+╚════════════════════════════════════════════════════════════╝
+
+============================================================
+ Full Fine-Tuning 
+============================================================
+Strategy: Full Fine-Tuning (all 291 parameters)
+Error: DriverError(CUDA_ERROR_OUT_OF_MEMORY, "out of memory")
+error: process didn't exit successfully: `target\release\GPT-2-Transfer-Learning.exe` (exit code: 1)

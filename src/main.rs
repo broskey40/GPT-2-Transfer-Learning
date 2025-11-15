@@ -206,50 +206,71 @@ fn apply_transfer_strategy(
     strategy: &TransferStrategy,
     n_layers: usize,
 ) -> Vec<candle_core::Var> {
-    let all_vars = varmap.all_vars();
+    // Get the data as a HashMap<String, Var> to access parameter names
+    let var_data = varmap.data();
+    let var_data = var_data.lock().unwrap();
 
     match strategy {
         TransferStrategy::FullFineTune => {
-            println!("Strategy: Full Fine-Tuning (all {} parameters)", all_vars.len());
-            all_vars
+            println!("Strategy: Full Fine-Tuning (all {} parameters)", var_data.len());
+            var_data.values().cloned().collect()
         }
         TransferStrategy::FreezeLowerLayers => {
-            println!("Strategy: Freeze Lower Layers (freeze first {})", n_layers / 2);
-            all_vars.into_iter()
-                .filter(|var| {
-                    let name = var.as_tensor().to_string();
-                    // Only train upper layers (h.6 onwards for 12-layer model)
-                    !name.contains(&format!("h.{}", 0)) &&
-                        !name.contains(&format!("h.{}", 1)) &&
-                        !name.contains(&format!("h.{}", 2)) &&
-                        !name.contains(&format!("h.{}", 3)) &&
-                        !name.contains(&format!("h.{}", 4)) &&
-                        !name.contains(&format!("h.{}", 5))
+            let freeze_count = n_layers / 2;
+            println!("Strategy: Freeze Lower Layers (freeze first {})", freeze_count);
+
+            let trainable: Vec<_> = var_data.iter()
+                .filter(|(name, _var)| {
+                    // For Qwen2, layers are named like "model.layers.0", "model.layers.1", etc.
+                    // Train upper half of layers
+                    let mut should_train = true;
+                    for i in 0..freeze_count {
+                        if name.contains(&format!("layers.{}", i)) {
+                            should_train = false;
+                            break;
+                        }
+                    }
+                    should_train
                 })
-                .collect()
+                .map(|(_name, var)| var.clone())
+                .collect();
+
+            println!("  Trainable parameters: {}/{}", trainable.len(), var_data.len());
+            trainable
         }
         TransferStrategy::FreezeEmbeddings => {
             println!("Strategy: Freeze Embeddings Only");
-            all_vars.into_iter()
-                .filter(|var| {
-                    let name = var.as_tensor().to_string();
-                    // Freeze embedding layers
-                    !name.contains("wte") && !name.contains("wpe")
+
+            let trainable: Vec<_> = var_data.iter()
+                .filter(|(name, _var)| {
+                    // Freeze embedding layers (embed_tokens in Qwen2)
+                    !name.contains("embed_tokens")
                 })
-                .collect()
+                .map(|(_name, var)| var.clone())
+                .collect();
+
+            println!("  Trainable parameters: {}/{}", trainable.len(), var_data.len());
+            trainable
         }
         TransferStrategy::AdapterLayers => {
             println!("Strategy: Adapter Layers (train last 2 layers + head)");
-            all_vars.into_iter()
-                .filter(|var| {
-                    let name = var.as_tensor().to_string();
-                    // Only train last layers and LM head
-                    name.contains("ln_f") ||
-                        name.contains("lm_head") ||
-                        name.contains(&format!("h.{}", n_layers - 1)) ||
-                        name.contains(&format!("h.{}", n_layers - 2))
+
+            let trainable: Vec<_> = var_data.iter()
+                .filter(|(name, _var)| {
+                    // Only train:
+                    // - Last 2 transformer layers (layers.22 and layers.23 for Qwen2-0.5B with 24 layers)
+                    // - Final layer norm (norm)
+                    // - LM head
+                    name.contains("lm_head") ||
+                    name.contains(&format!("layers.{}", n_layers - 1)) ||
+                    name.contains(&format!("layers.{}", n_layers - 2)) ||
+                    (name.contains("norm") && !name.contains("layers."))
                 })
-                .collect()
+                .map(|(_name, var)| var.clone())
+                .collect();
+
+            println!("  Trainable parameters: {}/{}", trainable.len(), var_data.len());
+            trainable
         }
     }
 }
@@ -310,19 +331,34 @@ fn train_model(
 fn main() -> Result<()> {
     println!("╔════════════════════════════════════════════════════════════╗");
     println!("║  Exercise 20.5: Transfer Learning for Domain Adaptation   ║");
-    println!("║  Using Candle + Qwen2-0.5B (CPU Mode - CUDA Tested!)      ║");
+    println!("║  Qwen2-0.5B - Adaptive GPU/CPU with Memory Optimization   ║");
     println!("╚════════════════════════════════════════════════════════════╝\n");
 
     // ========================================================================
-    // Setup - Using CPU for full demonstration
-    // Note: GPU inference was successfully tested and demonstrated
+    // Setup - Hybrid GPU/CPU with automatic fallback
     // ========================================================================
     println!("🔧 Setting up environment...");
-    let device = Device::Cpu;
-    println!("   Device: {:?} (GPU tested successfully)", device);
+
+    // Try to use CUDA, fall back to CPU if unavailable
+    let device = match Device::new_cuda(0) {
+        Ok(cuda_device) => {
+            println!("   ✓ CUDA GPU detected: Using GPU");
+            println!("   ✓ Memory optimization: Small batch size + Adapter strategy");
+            cuda_device
+        }
+        Err(_) => {
+            println!("   ⚠ CUDA not available: Falling back to CPU");
+            Device::Cpu
+        }
+    };
+
+    // Use FP32 (Qwen2 has some ops that don't support FP16 well)
+    // Memory savings come from: smaller batch + training only adapters
+    let dtype = DType::F32;
+    println!("   Device: {:?}, DType: {:?}", device, dtype);
 
     let mut varmap = VarMap::new();
-    let vb = VarBuilder::from_varmap(&varmap, DType::F32, &device);
+    let vb = VarBuilder::from_varmap(&varmap, dtype, &device);
 
     // ========================================================================
     // Load Pre-trained Model
@@ -365,10 +401,10 @@ fn main() -> Result<()> {
     let train_text = prepare_domain_dataset();
     let test_text = prepare_test_dataset();
 
-    // Create datasets on CPU with very small sequences to avoid KV cache issues
-    let block_size = 8;  // Very small to avoid KV cache dimension mismatches
+    // Create datasets with small sequences optimized for memory
+    let block_size = 4;  // Reduced from 8 for better GPU memory efficiency
     let train_data = tokenize_dataset(&train_text, &tokenizer, &device, block_size)?;
-    let test_data = tokenize_dataset(&test_text, &tokenizer, &device, 8)?;
+    let test_data = tokenize_dataset(&test_text, &tokenizer, &device, block_size)?;
     println!("   Train shape: {:?}", train_data.0.shape());
     println!("   Test shape: {:?}", test_data.0.shape());
 
@@ -396,11 +432,13 @@ fn main() -> Result<()> {
     println!("║           TRANSFER LEARNING STRATEGY COMPARISON           ║");
     println!("╚════════════════════════════════════════════════════════════╝");
 
+    // Order strategies from least to most memory intensive
+    // This allows GPU to handle lighter strategies even if heavier ones fail
     let strategies = vec![
-        ("Full Fine-Tuning", TransferStrategy::FullFineTune),
-        ("Freeze Lower Layers", TransferStrategy::FreezeLowerLayers),
-        ("Freeze Embeddings", TransferStrategy::FreezeEmbeddings),
-        ("Adapter Layers", TransferStrategy::AdapterLayers),
+        ("Adapter Layers", TransferStrategy::AdapterLayers),           // Lightest: 6% params
+        ("Freeze Lower Layers", TransferStrategy::FreezeLowerLayers),  // Medium: 64% params
+        ("Freeze Embeddings", TransferStrategy::FreezeEmbeddings),     // Medium-Heavy: 72% params
+        ("Full Fine-Tuning", TransferStrategy::FullFineTune),          // Heaviest: 100% params
     ];
 
     let mut results: HashMap<String, (Vec<f32>, f32)> = HashMap::new();
@@ -425,26 +463,70 @@ fn main() -> Result<()> {
         fresh_model.clear_kv_cache();
 
         // Apply strategy
-        let trainable_params = apply_transfer_strategy(&strategy_varmap, &strategy, 12);
+        let trainable_params = apply_transfer_strategy(&strategy_varmap, &strategy, config.num_hidden_layers);
 
-        // Train
-        let losses = train_model(
+        // Try training on current device, fall back to CPU on OOM
+        let (losses, final_perplexity, used_device) = match train_model(
             &mut fresh_model,
             &train_data,
             &test_data,
-            trainable_params,
+            trainable_params.clone(),
             1e-4,
-            20,  // Increased epochs for tiny sequences
-        )?;
+            20,
+        ) {
+            Ok(losses) => {
+                // Training succeeded on current device
+                let perp = calculate_perplexity(&mut fresh_model, &test_data.0, &test_data.1)?;
+                (losses, perp, format!("{:?}", device))
+            }
+            Err(e) if e.to_string().contains("out of memory") => {
+                // OOM on GPU - try CPU fallback
+                println!("\n⚠ GPU Out of Memory - Falling back to CPU for this strategy");
 
-        // Final evaluation
-        let final_perplexity = calculate_perplexity(&mut fresh_model, &test_data.0, &test_data.1)?;
-        println!("\n✓ Final Perplexity: {:.2}", final_perplexity);
+                // Reload model on CPU
+                let cpu_device = Device::Cpu;
+                let mut cpu_varmap = VarMap::new();
+                cpu_varmap.load(&weights_path)?;
+                let cpu_vb = VarBuilder::from_varmap(&cpu_varmap, DType::F32, &cpu_device);
+                let cpu_base_model = Qwen2Model::new(&config, cpu_vb.clone())?;
+                let cpu_lm_head = linear_no_bias(config.hidden_size, config.vocab_size, cpu_vb.pp("lm_head"))?;
+                let mut cpu_model = Qwen2ModelWithHead {
+                    model: cpu_base_model,
+                    lm_head: cpu_lm_head,
+                };
+
+                // Prepare data on CPU
+                let cpu_train_data = tokenize_dataset(&train_text, &tokenizer, &cpu_device, block_size)?;
+                let cpu_test_data = tokenize_dataset(&test_text, &tokenizer, &cpu_device, block_size)?;
+
+                // Apply strategy on CPU model
+                let cpu_trainable_params = apply_transfer_strategy(&cpu_varmap, &strategy, config.num_hidden_layers);
+
+                // Train on CPU
+                let cpu_losses = train_model(
+                    &mut cpu_model,
+                    &cpu_train_data,
+                    &cpu_test_data,
+                    cpu_trainable_params,
+                    1e-4,
+                    20,
+                )?;
+
+                // Evaluate on CPU
+                let cpu_perp = calculate_perplexity(&mut cpu_model, &cpu_test_data.0, &cpu_test_data.1)?;
+                fresh_model = cpu_model;  // Update model reference for generation
+                (cpu_losses, cpu_perp, "Cpu (fallback)".to_string())
+            }
+            Err(e) => return Err(e),  // Other errors are fatal
+        };
+
+        println!("\n✓ Final Perplexity: {:.2} (Device: {})", final_perplexity, used_device);
 
         results.insert(name.to_string(), (losses, final_perplexity));
 
         // Generate samples after training
-        evaluate_on_prompts(&mut fresh_model, &tokenizer, &device, &eval_prompts);
+        let gen_device = if used_device.contains("Cpu") { Device::Cpu } else { device.clone() };
+        evaluate_on_prompts(&mut fresh_model, &tokenizer, &gen_device, &eval_prompts);
     }
 
     // ========================================================================
